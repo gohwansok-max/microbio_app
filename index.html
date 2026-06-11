@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미생물 검사 일지 생성기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+  }
+
+  .header {
+    background: #1a3a5c;
+    color: #fff;
+    padding: 28px 32px 24px;
+  }
+
+  .header .label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #7fb3d3;
+    margin-bottom: 6px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .body {
+    padding: 32px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #7fb3d3;
+    margin-bottom: 14px;
+    margin-top: 28px;
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334e68;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], input[type="date"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #d0dbe8;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1a3a5c;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input[type="text"]:focus, input[type="date"]:focus {
+    border-color: #1a3a5c;
+    background: #fff;
+  }
+
+  .product-preview {
+    background: #eef4fa;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #4a6fa5;
+    margin-top: 8px;
+    line-height: 1.8;
+    display: none;
+  }
+
+  .product-preview.show { display: block; }
+
+  .divider {
+    height: 1px;
+    background: #e8eef4;
+    margin: 24px 0;
+  }
+
+  .photo-field {
+    margin-bottom: 16px;
+  }
+
+  .photo-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334e68;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .photo-badge {
+    display: inline-block;
+    background: #1a3a5c;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 0.5px;
+  }
+
+  .photo-upload {
+    position: relative;
+    width: 100%;
+  }
+
+  .photo-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .photo-upload-btn {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px dashed #a0bbd4;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #5a7fa0;
+    font-size: 13px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .photo-upload:hover .photo-upload-btn {
+    border-color: #1a3a5c;
+    background: #eef4fa;
+  }
+
+  .photo-upload-btn.selected {
+    border-color: #2e7d32;
+    background: #f1f8f1;
+    color: #2e7d32;
+    border-style: solid;
+  }
+
+  .photo-icon { font-size: 16px; }
+
+  .btn-generate {
+    width: 100%;
+    padding: 14px;
+    background: #1a3a5c;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-generate:hover { background: #0f2540; }
+  .btn-generate:active { transform: scale(0.98); }
+  .btn-generate:disabled { background: #a0b4c8; cursor: not-allowed; }
+
+  .status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+  }
+
+  .status.loading {
+    display: block;
+    background: #eef4fa;
+    color: #1a3a5c;
+  }
+
+  .status.success {
+    display: block;
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  .status.error {
+    display: block;
+    background: #fdecea;
+    color: #c62828;
+  }
+
+  .footer {
+    padding: 16px 32px;
+    background: #f8fafc;
+    border-top: 1px solid #e8eef4;
+    font-size: 11px;
+    color: #8aa4bc;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="label">코엔에프(유) 연구소</div>
+    <h1>미생물 검사 일지<br>자동 생성기</h1>
+  </div>
+
+  <div class="body">
+    <!-- 날짜 정보 -->
+    <div class="section-title">📅 날짜 정보</div>
+
+    <div class="field">
+      <label>검사일자</label>
+      <input type="text" id="inspDate" placeholder="예: 2026. 06. 02" />
+    </div>
+    <div class="field">
+      <label>확인일자</label>
+      <input type="text" id="confDate" placeholder="예: 2026. 06. 04" />
+    </div>
+    <div class="field">
+      <label>제조일자</label>
+      <input type="text" id="mfgDate" placeholder="예: 2026. 06. 02" />
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 제품명 -->
+    <div class="section-title">🧴 제품 정보</div>
+
+    <div class="field">
+      <label>제품명</label>
+      <input type="text" id="productName" placeholder="예: 카페포션 헤이즐럿향" oninput="updatePreview()" />
+      <div class="product-preview" id="productPreview"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 사진 업로드 -->
+    <div class="section-title">📸 검사 사진 (3장)</div>
+
+    <div class="photo-field">
+      <div class="photo-label">
+        <span class="photo-badge">사진 1</span>
+        일반세균 BLANK
+      </div>
+      <div class="photo-upload">
+        <input type="file" id="photo1" accept="image/*" onchange="updatePhotoBtn(1)">
+        <div class="photo-upload-btn" id="btn1">
+          <span class="photo-icon">📎</span>
+          <span id="btn1text">파일 선택</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-field">
+      <div class="photo-label">
+        <span class="photo-badge">사진 2</span>
+        대장균군 BLANK
+      </div>
+      <div class="photo-upload">
+        <input type="file" id="photo2" accept="image/*" onchange="updatePhotoBtn(2)">
+        <div class="photo-upload-btn" id="btn2">
+          <span class="photo-icon">📎</span>
+          <span id="btn2text">파일 선택</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-field">
+      <div class="photo-label">
+        <span class="photo-badge">사진 3</span>
+        검사결과 전체
+      </div>
+      <div class="photo-upload">
+        <input type="file" id="photo3" accept="image/*" onchange="updatePhotoBtn(3)">
+        <div class="photo-upload-btn" id="btn3">
+          <span class="photo-icon">📎</span>
+          <span id="btn3text">파일 선택</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn-generate" id="genBtn" onclick="generate()">
+      📄 일지 생성하기
+    </button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="footer">
+    원본 양식 그대로 · 날짜·제품명·사진만 교체
+  </div>
+</div>
+
+<script>
+function updatePreview() {
+  const name = document.getElementById('productName').value.trim();
+  const preview = document.getElementById('productPreview');
+  if (!name) { preview.classList.remove('show'); return; }
+  const suffixes = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'];
+  preview.innerHTML = suffixes.map(s => `✓ ${name} ${s}`).join('<br>');
+  preview.classList.add('show');
+}
+
+function updatePhotoBtn(n) {
+  const file = document.getElementById(`photo${n}`).files[0];
+  const btn = document.getElementById(`btn${n}`);
+  const text = document.getElementById(`btn${n}text`);
+  if (file) {
+    btn.classList.add('selected');
+    text.textContent = `✓ ${file.name}`;
+  } else {
+    btn.classList.remove('selected');
+    text.textContent = '파일 선택';
+  }
+}
+
+async function generate() {
+  const inspDate  = document.getElementById('inspDate').value.trim();
+  const confDate  = document.getElementById('confDate').value.trim();
+  const mfgDate   = document.getElementById('mfgDate').value.trim();
+  const product   = document.getElementById('productName').value.trim();
+  const photo1    = document.getElementById('photo1').files[0];
+  const photo2    = document.getElementById('photo2').files[0];
+  const photo3    = document.getElementById('photo3').files[0];
+
+  if (!inspDate || !confDate || !mfgDate) {
+    showStatus('error', '❌ 날짜 3개를 모두 입력해주세요.');
+    return;
+  }
+  if (!product) {
+    showStatus('error', '❌ 제품명을 입력해주세요.');
+    return;
+  }
+  if (!photo1 || !photo2 || !photo3) {
+    showStatus('error', '❌ 사진 3장을 모두 선택해주세요.');
+    return;
+  }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  showStatus('loading', '⏳ 일지 생성 중...');
+
+  const formData = new FormData();
+  formData.append('insp_date', inspDate);
+  formData.append('conf_date', confDate);
+  formData.append('mfg_date', mfgDate);
+  formData.append('product_name', product);
+  formData.append('photo1', photo1);
+  formData.append('photo2', photo2);
+  formData.append('photo3', photo3);
+
+  try {
+    const res = await fetch('http://localhost:5050/generate', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || '서버 오류');
+    }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const filename = `미생물검사일지_${product}_${inspDate.replace(/\. /g, '').replace(/\./g, '')}.xlsx`;
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showStatus('success', `✅ 생성 완료! 파일을 저장하세요.`);
+  } catch (e) {
+    showStatus('error', `❌ 오류: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = `status ${type}`;
+  el.textContent = msg;
+}
+</script>
+</body>
+</html>
