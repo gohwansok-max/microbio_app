@@ -325,6 +325,11 @@
 
     <div class="divider"></div>
 
+    <div class="field">
+      <label>저장할 엑셀 파일명 (선택)</label>
+      <input type="text" id="customFileName" placeholder="미입력 시 '미생물검사일지_제품명_날짜'로 자동 지정" />
+    </div>
+
     <button class="btn-generate" id="genBtn" onclick="generate()">
       📄 일지 생성하기
     </button>
@@ -360,6 +365,18 @@ function updatePhotoBtn(n) {
   }
 }
 
+function getBackendUrl() {
+  var origin = window.location.origin;
+  var hostname = window.location.hostname;
+  if (origin.includes("github.io")) {
+    return "https://ais-pre-u7n6dxmrpvh4fl5wtaoqe4-103433252122.asia-northeast1.run.app";
+  }
+  if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1" && origin.startsWith("http")) {
+    return "http://" + hostname + ":5050";
+  }
+  return "http://127.0.0.1:5050";
+}
+
 async function generate() {
   const inspDate  = document.getElementById('inspDate').value.trim();
   const confDate  = document.getElementById('confDate').value.trim();
@@ -384,7 +401,7 @@ async function generate() {
 
   const btn = document.getElementById('genBtn');
   btn.disabled = true;
-  showStatus('loading', '⏳ 일지 생성 중...');
+  showStatus('loading', '⏳ 사진 전송 및 엑셀 생성 중... (사진 크기에 따라 10~30초 소요될 수 있습니다)');
 
   const formData = new FormData();
   formData.append('insp_date', inspDate);
@@ -395,8 +412,10 @@ async function generate() {
   formData.append('photo2', photo2);
   formData.append('photo3', photo3);
 
+  let targetUrl = "http://127.0.0.1:5050";
   try {
-    const res = await fetch('http://localhost:5050/generate', {
+    targetUrl = getBackendUrl();
+    const res = await fetch(targetUrl + '/generate', {
       method: 'POST',
       body: formData
     });
@@ -409,7 +428,11 @@ async function generate() {
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    const filename = `미생물검사일지_${product}_${inspDate.replace(/\. /g, '').replace(/\./g, '')}.xlsx`;
+    
+    let filename = `미생물검사일지_${product}_${inspDate.replace(/\. /g, '').replace(/\./g, '')}.xlsx`;
+    const customName = document.getElementById('customFileName') ? document.getElementById('customFileName').value.trim() : '';
+    if (customName) { filename = customName.endsWith('.xlsx') ? customName : customName + '.xlsx'; }
+    
     a.href = url;
     a.download = filename;
     a.click();
@@ -417,7 +440,11 @@ async function generate() {
 
     showStatus('success', `✅ 생성 완료! 파일을 저장하세요.`);
   } catch (e) {
-    showStatus('error', `❌ 오류: ${e.message}`);
+    if (e.message === 'Failed to fetch') {
+      showStatus('error', `❌ 서버 접속 실패 (${targetUrl}): 파이썬 서버가 켜져 있는지 확인해주세요.`);
+    } else {
+      showStatus('error', `❌ 오류: ${e.message}`);
+    }
   } finally {
     btn.disabled = false;
   }
